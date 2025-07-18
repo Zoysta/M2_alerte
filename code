@@ -1,209 +1,38 @@
 import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
-import os
 
-def ensure_directories():
-    """Créer les répertoires nécessaires"""
-    os.makedirs('historiques', exist_ok=True)
-    os.makedirs('data', exist_ok=True)
+# Load the data from the CSV file
+file = 'm2_108.csv'
+filtered_data = pd.read_csv(file)
 
-def detect_consecutive_declines(data, weeks=2):
-    """Détecter les séquences de dégradation M2"""
-    data = data.copy()
-    data['Decline_Flag'] = data['% M2 Variation'] < -5  # Seuil dégradation
-    
-    sequences = []
-    current_sequence = []
-    
-    for idx, row in data.iterrows():
-        if row['Decline_Flag']:
-            current_sequence.append({
-                'date': row['DateTime'],
-                'variation': row['% M2 Variation']
-            })
-        else:
-            if len(current_sequence) >= weeks:
-                sequences.append(current_sequence.copy())
-            current_sequence = []
-    
-    # Vérifier la dernière séquence
-    if len(current_sequence) >= weeks:
-        sequences.append(current_sequence.copy())
-    
-    return sequences
+# Display the column namesprint(filtered_data.columns)
 
-def analyze_m2_alerts(data):
-    """Analyse M2 avec focus sur les 6 dernières alertes"""
-    
-    # Calculer les variations M2 si pas déjà fait
-    if '% M2 Variation' not in data.columns:
-        print("🔧 Calcul des variations M2...")
-        data['M2 Variation'] = data['M2 Growth YoY (%) décalé de 108 jours'].diff()
-        data['% M2 Variation'] = (data['M2 Variation'] / 
-                                data['M2 Growth YoY (%) décalé de 108 jours'].shift(1)) * 100
-    
-    # Filtrer alertes significatives (>10%)
-    significant_alerts = data[
-        (pd.notna(data['% M2 Variation'])) & 
-        (abs(data['% M2 Variation']) >= 10)
-    ].copy()
-    
-    if len(significant_alerts) == 0:
-        return "✅ Aucune alerte M2 >10% détectée", []
-    
-    # PRENDRE SEULEMENT LES 6 DERNIÈRES (plus récentes)
-    recent_alerts = significant_alerts.tail(6)
-    
-    print(f"📊 {len(recent_alerts)} alertes récentes analysées (sur {len(significant_alerts)} total)")
-    
-    # Analyser les patterns
-    major_drops = (recent_alerts['% M2 Variation'] < -15).sum()
-    consecutive_drops = 0
-    
-    # Compter séquences consécutives
-    for i in range(1, len(recent_alerts)):
-        current = recent_alerts.iloc[i]
-        previous = recent_alerts.iloc[i-1]
-        if current['% M2 Variation'] < -5 and previous['% M2 Variation'] < -5:
-            consecutive_drops += 1
-    
-    # Niveau M2 actuel (dernière valeur)
-    current_m2 = data.iloc[-1]['M2 Growth YoY (%) décalé de 108 jours']
-    last_variation = data.iloc[-1]['% M2 Variation']
-    
-    # ALERTE SIMPLE basée sur données récentes
-    if major_drops >= 1 and current_m2 < 4:
-        alert = "🚨 CHUTE BTC PROBABLE (5-7 jours)"
-    elif consecutive_drops >= 1:
-        alert = "⚠️ SURVEILLANCE M2 (dégradation en cours)"
-    elif last_variation > 20 and current_m2 < 3:
-        alert = "🔄 REBOND SUSPECT M2"
-    else:
-        alert = "✅ M2 NORMAL"
-    
-    return alert, recent_alerts
+# Calculate the variation for the 'BTC price' column
+filtered_data['BTC Variation'] = filtered_data['BTC price'].diff()
 
-def create_alert_summary(alert, recent_alerts, current_m2, last_variation):
-    """Crée fiche alerte focus sur données récentes"""
-    
-    report = []
-    report.append("=" * 70)
-    report.append("📋 FICHE ALERTE M2 - 6 DERNIÈRES ALERTES")
-    report.append("=" * 70)
-    report.append("")
-    
-    # En-tête avec focus récent
-    report.append(f"🎯 STATUT ACTUEL: {alert}")
-    report.append(f"📊 M2 niveau actuel: {current_m2:.2f}%")
-    report.append(f"📉 Dernière variation: {last_variation:+.2f}%")
-    report.append(f"📅 Analyse: {datetime.now().strftime('%d/%m/%Y %H:%M')}")
-    report.append("")
-    
-    if len(recent_alerts) == 0:
-        report.append("✅ Aucune alerte récente >10%")
-        report.append("")
-        report.append("=" * 70)
-        return "\n".join(report)
-    
-    # ALERTES RÉCENTES avec calcul 12 jours d'avance
-    report.append("🚨 ALERTES RÉCENTES >10% (6 dernières):")
-    report.append("")
-    
-    for _, row in recent_alerts.iterrows():
-        variation_date = row['DateTime']
-        variation_pct = row['% M2 Variation']
-        
-        # Calculer date d'alerte (12 jours avant)
-        try:
-            var_date_obj = datetime.strptime(variation_date, '%Y-%m-%d')
-            alert_date_obj = var_date_obj - timedelta(days=12)
-            alert_date = alert_date_obj.strftime('%d/%m/%Y')
-            
-            if variation_pct < 0:
-                icon = "🚨"
-                action = "VENTE/SHORT"
-            else:
-                icon = "🚀"
-                action = "ACHAT/LONG"
-            
-            report.append(f"   {icon} {variation_date}: {variation_pct:+.2f}% ({action})")
-            report.append(f"      ⏰ Alerte dès: {alert_date}")
-            report.append(f"      💡 Action: {action} recommandé dès {alert_date}")
-            report.append("")
-            
-        except ValueError:
-            report.append(f"   📅 {variation_date}: {variation_pct:+.2f}%")
-            report.append(f"      ⚠️ Date invalide pour calcul d'alerte")
-            report.append("")
-    
-    # Statistiques récentes
-    avg_variation = recent_alerts['% M2 Variation'].mean()
-    max_variation = recent_alerts['% M2 Variation'].max()
-    min_variation = recent_alerts['% M2 Variation'].min()
-    
-    report.append("📊 STATISTIQUES 6 DERNIÈRES:")
-    report.append(f"   📈 Variation moyenne: {avg_variation:+.1f}%")
-    report.append(f"   📈 Plus forte hausse: {max_variation:+.1f}%")
-    report.append(f"   📉 Plus forte baisse: {min_variation:+.1f}%")
-    report.append("")
-    
-    # Instructions
-    report.append("💡 UTILISATION:")
-    report.append("   • Focus sur les 6 alertes les plus récentes")
-    report.append("   • Alertes futures programmées dans Google Calendar")
-    report.append("   • Préparer actions 12 jours avant variation M2")
-    report.append("")
-    
-    report.append("=" * 70)
-    
-    return "\n".join(report)
+# Calculate the percentage variation of Bitcoin
+filtered_data['% Variation BTC'] = (filtered_data['BTC Variation'] / filtered_data['BTC price'].shift(1)) * 100
 
-def main():
-    """Fonction principale avec focus récent"""
-    
-    print("🚀 Système d'Alerte M2 - Focus 6 Dernières")
-    print("📊 Analyse des alertes récentes seulement")
-    print("=" * 70)
-    
-    try:
-        # Créer répertoires
-        ensure_directories()
-        
-        # Charger données
-        print("📊 Chargement données M2...")
-        data = pd.read_csv('m2_108.csv')
-        print(f"✅ Données chargées: {len(data)} lignes")
-        
-        # Analyser avec focus récent
-        print("\n🔍 Analyse alertes récentes...")
-        alert, recent_alerts = analyze_m2_alerts(data)
-        
-        # Données actuelles
-        current_m2 = data.iloc[-1]['M2 Growth YoY (%) décalé de 108 jours']
-        last_variation = data.iloc[-1]['% M2 Variation']
-        
-        # Créer rapport focus récent
-        print("\n📋 GÉNÉRATION RAPPORT RÉCENT:")
-        report = create_alert_summary(alert, recent_alerts, current_m2, last_variation)
-        print(report)
-        
-        # Sauvegarder
-        date_str = datetime.now().strftime('%Y-%m-%d')
-        filename = f"historiques/{date_str}-rapport-m2.txt"
-        
-        with open(filename, 'w', encoding='utf-8') as f:
-            f.write(f"Rapport généré le: {datetime.now().strftime('%d/%m/%Y à %H:%M')}\n")
-            f.write(f"Source: m2_108.csv\n\n")
-            f.write(report)
-        
-        print(f"\n💾 Rapport sauvegardé: {filename}")
-        print(f"📁 Répertoire: {os.getcwd()}")
-        print(f"🎯 Focus: 6 dernières alertes seulement")
-        
-    except Exception as e:
-        print(f"❌ Erreur lors de l'analyse: {str(e)}")
-        print("🔧 Vérifiez le fichier CSV et réessayez")
+# Calculate the variation for 'M2 Growth YoY (%) décalé de 108 jours'
+filtered_data['M2 Variation'] = filtered_data['M2 Growth YoY (%) décalé de 108 jours'].diff()
 
-if __name__ == "__main__":
-    main()
+# Calculate the percentage variation for 'M2 Growth YoY (%) décalé de 108 jours'
+filtered_data['% M2 Variation'] = (filtered_data['M2 Variation'] / filtered_data['M2 Growth YoY (%) décalé de 108 jours'].shift(1)) * 100
+
+# Rearranging columns in the specified order
+filtered_data = filtered_data[['DateTime', 
+                                'BTC price', 
+                                'BTC Variation', 
+                                '% Variation BTC', 
+                                'M2 Growth YoY (%)', 
+                                'M2 Growth YoY (%) décalé de 108 jours', 
+                                'M2 Variation', 
+                                '% M2 Variation']]
+
+# Forcer l'affichage de toutes les données
+pd.set_option('display.max_rows', None)     # Afficher toutes les lignes
+pd.set_option('display.max_columns', None)  # Afficher toutes les colonnes
+pd.set_option('display.width', 1000)        # Éviter que les colonnes soient coupées
+pd.set_option('display.float_format', '{:.6f}'.format)  # Afficher 6 décimales pour éviter la notation scientifique
+
+# Affichage du DataFrame complet
+print(filtered_data)
