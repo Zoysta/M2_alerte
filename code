@@ -144,9 +144,6 @@ def create_alert_summary(alert, recent_alerts, current_m2, last_variation):
     # Instructions
     report.append("💡 UTILISATION:")
     report.append("   • Focus sur les 6 alertes les plus récentes")
-    report.append("   • Alertes futures programmées dans Google Calendar")
-    report.append("   • Préparer actions 12 jours avant variation M2")
-    report.append("")
     
     report.append("=" * 70)
     
@@ -168,7 +165,7 @@ def main():
         
         # Analyser avec focus récent
         print("\n🔍 Analyse alertes récentes...")
-        alert, recent_alerts = analyze_m2_alerts(data)
+ 
         
         # Données actuelles
 
