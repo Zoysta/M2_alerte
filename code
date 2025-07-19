@@ -70,11 +70,7 @@ def analyze_m2_alerts(data):
     
     # ALERTE SIMPLE basée sur données récentes
     if major_drops >= 1 and current_m2 < 4:
-        alert = "🚨 CHUTE BTC PROBABLE (5-7 jours)"
-    elif consecutive_drops >= 1:
-        alert = "⚠️ SURVEILLANCE M2 (dégradation en cours)"
-    elif last_variation > 20 and current_m2 < 3:
-        alert = "🔄 REBOND SUSPECT M2"
+"
     else:
         alert = "✅ M2 NORMAL"
     
@@ -181,8 +177,8 @@ def main():
         
         with open(filename, 'w', encoding='utf-8') as f:
             f.write(f"Rapport généré le: {datetime.now().strftime('%d/%m/%Y à %H:%M')}\n")
-            f.write(f"Source: m2_108.csv\n\n")
-            f.write(report)
+           
+       
         
         print(f"\n💾 Rapport sauvegardé: {filename}")
         print(f"📁 Répertoire: {os.getcwd()}")
