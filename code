@@ -39,9 +39,7 @@ def analyze_m2_alerts(data):
     # Calculer les variations M2 si pas déjà fait
     if '% M2 Variation' not in data.columns:
         print("🔧 Calcul des variations M2...")
-        data['M2 Variation'] = data['M2 Growth YoY (%) décalé de 108 jours'].diff()
-        data['% M2 Variation'] = (data['M2 Variation'] / 
-                                data['M2 Growth YoY (%) décalé de 108 jours'].shift(1)) * 100
+
     
     # Filtrer alertes significatives (>10%)
     significant_alerts = data[
@@ -69,8 +67,7 @@ def analyze_m2_alerts(data):
             consecutive_drops += 1
     
     # Niveau M2 actuel (dernière valeur)
-    current_m2 = data.iloc[-1]['M2 Growth YoY (%) décalé de 108 jours']
-    last_variation = data.iloc[-1]['% M2 Variation']
+
     
     # ALERTE SIMPLE basée sur données récentes
     if major_drops >= 1 and current_m2 < 4:
@@ -106,7 +103,7 @@ def create_alert_summary(alert, recent_alerts, current_m2, last_variation):
         report.append("=" * 70)
         return "\n".join(report)
     
-    # ALERTES RÉCENTES avec calcul 12 jours d'avance
+    # ALERTES RÉCENTES avec calcul 
     report.append("🚨 ALERTES RÉCENTES >10% (6 dernières):")
     report.append("")
     
@@ -114,7 +111,7 @@ def create_alert_summary(alert, recent_alerts, current_m2, last_variation):
         variation_date = row['DateTime']
         variation_pct = row['% M2 Variation']
         
-        # Calculer date d'alerte (12 jours avant)
+        # Calculer date d'alerte
         try:
             var_date_obj = datetime.strptime(variation_date, '%Y-%m-%d')
             alert_date_obj = var_date_obj - timedelta(days=12)
@@ -151,9 +148,6 @@ def create_alert_summary(alert, recent_alerts, current_m2, last_variation):
     # Instructions
     report.append("💡 UTILISATION:")
     report.append("   • Focus sur les 6 alertes les plus récentes")
-    report.append("   • Alertes futures programmées dans Google Calendar")
-    report.append("   • Préparer actions 12 jours avant variation M2")
-    report.append("")
     
     report.append("=" * 70)
     
@@ -172,16 +166,14 @@ def main():
         
         # Charger données
         print("📊 Chargement données M2...")
-        data = pd.read_csv('m2_108.csv')
-        print(f"✅ Données chargées: {len(data)} lignes")
+
         
         # Analyser avec focus récent
         print("\n🔍 Analyse alertes récentes...")
         alert, recent_alerts = analyze_m2_alerts(data)
         
         # Données actuelles
-        current_m2 = data.iloc[-1]['M2 Growth YoY (%) décalé de 108 jours']
-        last_variation = data.iloc[-1]['% M2 Variation']
+
         
         # Créer rapport focus récent
         print("\n📋 GÉNÉRATION RAPPORT RÉCENT:")
