@@ -98,7 +98,7 @@ def create_alert_summary(alert, recent_alerts, current_m2, last_variation):
         report.append("=" * 70)
         return "\n".join(report)
     
-    # ALERTES RÉCENTES avec calcul 12 jours d'avance
+    # ALERTES RÉCENTES avec calcul
     report.append("🚨 ALERTES RÉCENTES >10% (6 dernières):")
     report.append("")
     
@@ -139,8 +139,6 @@ def create_alert_summary(alert, recent_alerts, current_m2, last_variation):
     # Instructions
     report.append("💡 UTILISATION:")
     report.append("   • Focus sur les 6 alertes les plus récentes")
-    report.append("   • Alertes futures programmées dans Google Calendar")
-    report.append("   • Préparer actions 12 jours avant variation M2")
     report.append("")
     
     report.append("=" * 70)
@@ -164,7 +162,7 @@ def main():
         alert, recent_alerts = analyze_m2_alerts(data)
         
         # Données actuelles
-        current_m2 = data.iloc[-1]['M2 Growth YoY (%) décalé de 108 jours']
+        current_m2 = data.iloc[-1]['M2 Growth YoY (%) décalé de  jours']
         last_variation = data.iloc[-1]['% M2 Variation']
         
         # Créer rapport focus récent
@@ -177,9 +175,7 @@ def main():
         filename = f"historiques/{date_str}-rapport-m2.txt"
         
         with open(filename, 'w', encoding='utf-8') as f:
-            f.write(f"Rapport généré le: {datetime.now().strftime('%d/%m/%Y à %H:%M')}\n")
-            f.write(f"Source: m2_108.csv\n\n")
-            f.write(report)
+        f.write(report)
         
         print(f"\n💾 Rapport sauvegardé: {filename}")
         print(f"📁 Répertoire: {os.getcwd()}")
