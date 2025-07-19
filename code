@@ -37,11 +37,7 @@ def analyze_m2_alerts(data):
     """Analyse M2 avec focus sur les 6 dernières alertes"""
     
     # Calculer les variations M2 si pas déjà fait
-    if '% M2 Variation' not in data.columns:
-        print("🔧 Calcul des variations M2...")
-        data['M2 Variation'] = data['M2 Growth YoY (%) décalé de 108 jours'].diff()
-        data['% M2 Variation'] = (data['M2 Variation'] / 
-                                data['M2 Growth YoY (%) décalé de 108 jours'].shift(1)) * 100
+
     
     # Filtrer alertes significatives (>10%)
     significant_alerts = data[
@@ -69,20 +65,10 @@ def analyze_m2_alerts(data):
             consecutive_drops += 1
     
     # Niveau M2 actuel (dernière valeur)
-    current_m2 = data.iloc[-1]['M2 Growth YoY (%) décalé de 108 jours']
-    last_variation = data.iloc[-1]['% M2 Variation']
+
     
     # ALERTE SIMPLE basée sur données récentes
-    if major_drops >= 1 and current_m2 < 4:
-        alert = "🚨 CHUTE BTC PROBABLE (5-7 jours)"
-    elif consecutive_drops >= 1:
-        alert = "⚠️ SURVEILLANCE M2 (dégradation en cours)"
-    elif last_variation > 20 and current_m2 < 3:
-        alert = "🔄 REBOND SUSPECT M2"
-    else:
-        alert = "✅ M2 NORMAL"
-    
-    return alert, recent_alerts
+
 
 def create_alert_summary(alert, recent_alerts, current_m2, last_variation):
     """Crée fiche alerte focus sur données récentes"""
@@ -106,15 +92,12 @@ def create_alert_summary(alert, recent_alerts, current_m2, last_variation):
         report.append("=" * 70)
         return "\n".join(report)
     
-    # ALERTES RÉCENTES avec calcul 12 jours d'avance
-    report.append("🚨 ALERTES RÉCENTES >10% (6 dernières):")
-    report.append("")
     
     for _, row in recent_alerts.iterrows():
         variation_date = row['DateTime']
         variation_pct = row['% M2 Variation']
         
-        # Calculer date d'alerte (12 jours avant)
+        # Calculer date d'alerte
         try:
             var_date_obj = datetime.strptime(variation_date, '%Y-%m-%d')
             alert_date_obj = var_date_obj - timedelta(days=12)
@@ -180,9 +163,7 @@ def main():
         alert, recent_alerts = analyze_m2_alerts(data)
         
         # Données actuelles
-        current_m2 = data.iloc[-1]['M2 Growth YoY (%) décalé de 108 jours']
-        last_variation = data.iloc[-1]['% M2 Variation']
-        
+
         # Créer rapport focus récent
         print("\n📋 GÉNÉRATION RAPPORT RÉCENT:")
         report = create_alert_summary(alert, recent_alerts, current_m2, last_variation)
