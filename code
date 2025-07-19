@@ -155,7 +155,6 @@ def main():
         
         # Charger données
         print("📊 Chargement données M2...")
-        data = pd.read_csv('m2_108.csv')
         print(f"✅ Données chargées: {len(data)} lignes")
         
         # Analyser avec focus récent
@@ -174,9 +173,7 @@ def main():
         filename = f"historiques/{date_str}-rapport-m2.txt"
         
         with open(filename, 'w', encoding='utf-8') as f:
-            f.write(f"Rapport généré le: {datetime.now().strftime('%d/%m/%Y à %H:%M')}\n")
-            f.write(f"Source: m2_108.csv\n\n")
-            f.write(report)
+            f.write(f"Rapport généré le: {datetime.now().strftime('%d/%m/%Y à %H:%M')}\n"
         
         print(f"\n💾 Rapport sauvegardé: {filename}")
         print(f"📁 Répertoire: {os.getcwd()}")
