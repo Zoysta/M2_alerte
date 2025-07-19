@@ -37,11 +37,7 @@ def analyze_m2_alerts(data):
     """Analyse M2 avec focus sur les 6 dernières alertes"""
     
     # Calculer les variations M2 si pas déjà fait
-    if '% M2 Variation' not in data.columns:
-        print("🔧 Calcul des variations M2...")
-        data['M2 Variation'] = data['M2 Growth YoY (%) décalé de 108 jours'].diff()
-        data['% M2 Variation'] = (data['M2 Variation'] / 
-                                data['M2 Growth YoY (%) décalé de 108 jours'].shift(1)) * 100
+
     
     # Filtrer alertes significatives (>10%)
     significant_alerts = data[
@@ -62,11 +58,7 @@ def analyze_m2_alerts(data):
     consecutive_drops = 0
     
     # Compter séquences consécutives
-    for i in range(1, len(recent_alerts)):
-        current = recent_alerts.iloc[i]
-        previous = recent_alerts.iloc[i-1]
-        if current['% M2 Variation'] < -5 and previous['% M2 Variation'] < -5:
-            consecutive_drops += 1
+
     
     # Niveau M2 actuel (dernière valeur)
     current_m2 = data.iloc[-1]['M2 Growth YoY (%) décalé de 108 jours']
@@ -114,11 +106,7 @@ def create_alert_summary(alert, recent_alerts, current_m2, last_variation):
         variation_date = row['DateTime']
         variation_pct = row['% M2 Variation']
         
-        # Calculer date d'alerte (12 jours avant)
-        try:
-            var_date_obj = datetime.strptime(variation_date, '%Y-%m-%d')
-            alert_date_obj = var_date_obj - timedelta(days=12)
-            alert_date = alert_date_obj.strftime('%d/%m/%Y')
+
             
             if variation_pct < 0:
                 icon = "🚨"
@@ -170,10 +158,6 @@ def main():
         # Créer répertoires
         ensure_directories()
         
-        # Charger données
-        print("📊 Chargement données M2...")
-        data = pd.read_csv('m2_108.csv')
-        print(f"✅ Données chargées: {len(data)} lignes")
         
         # Analyser avec focus récent
         print("\n🔍 Analyse alertes récentes...")
