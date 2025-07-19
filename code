@@ -1,7 +1,7 @@
 import pandas as pd
 
 # Load the data from the CSV file
-file = 'm2_108.csv'
+file = 
 filtered_data = pd.read_csv(file)
 
 # Display the column namesprint(filtered_data.columns)
@@ -12,21 +12,13 @@ filtered_data['BTC Variation'] = filtered_data['BTC price'].diff()
 # Calculate the percentage variation of Bitcoin
 filtered_data['% Variation BTC'] = (filtered_data['BTC Variation'] / filtered_data['BTC price'].shift(1)) * 100
 
-# Calculate the variation for 'M2 Growth YoY (%) décalé de 108 jours'
-filtered_data['M2 Variation'] = filtered_data['M2 Growth YoY (%) décalé de 108 jours'].diff()
+# Calculate the variation for ''
+filtered_data['M2 Variation'] = filtered_data['M2 Growth YoY (%) décalé de  jours'].diff()'
 
-# Calculate the percentage variation for 'M2 Growth YoY (%) décalé de 108 jours'
-filtered_data['% M2 Variation'] = (filtered_data['M2 Variation'] / filtered_data['M2 Growth YoY (%) décalé de 108 jours'].shift(1)) * 100
 
 # Rearranging columns in the specified order
 filtered_data = filtered_data[['DateTime', 
-                                'BTC price', 
-                                'BTC Variation', 
-                                '% Variation BTC', 
-                                'M2 Growth YoY (%)', 
-                                'M2 Growth YoY (%) décalé de 108 jours', 
-                                'M2 Variation', 
-                                '% M2 Variation']]
+                                
 
 # Forcer l'affichage de toutes les données
 pd.set_option('display.max_rows', None)     # Afficher toutes les lignes
